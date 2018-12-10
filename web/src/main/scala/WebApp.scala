@@ -29,13 +29,12 @@ trait WebApp extends run.Application { self =>
     Array("org.wartremover.warts.Var",
           "org.wartremover.warts.NonUnitStatements",
           "org.wartremover.warts.Recursion"))
-  final def run(initialNode: Node): Unit = {
-    import Html._
-
+  final def run(initialNode: Node,
+                differenceActivated: WebApp.DifferenceActivated): Unit = {
     final case class State(node: Node, view: Html[Unit], model: Model)
 
     var state: State =
-      State(initialNode, Text(""), initialModel)
+      State(initialNode, Html.Text(""), initialModel)
 
     def actualize(newModel: Model): Unit = {
       val newView: Html[Unit] =
@@ -46,11 +45,16 @@ trait WebApp extends run.Application { self =>
       val oldNode: Node = state.node
       val parent: Node = oldNode.parentNode
 
-      val newNode: Node = {
-        val n = newView.draw
-        parent.replaceChild(n, oldNode)
-        n
-      }
+      val newNode: Node =
+        if (differenceActivated.boolean)
+          Rendering.difference(parent,
+                               Rendering.Entry(state.view, state.node),
+                               newView)
+        else {
+          val n = Rendering.draw(newView)
+          parent.replaceChild(n, oldNode)
+          n
+        }
 
       state = State(newNode, newView, newModel)
     }
@@ -62,13 +66,19 @@ trait WebApp extends run.Application { self =>
     *
     * @param id attribute of the node
     */
-  @inline final def runMain(id: String): Unit =
+  @inline final def runMain(
+      id: String,
+      differenceActivated: WebApp.DifferenceActivated): Unit =
     WebApp.onLoading {
-      run(document.getElementById(id))
+      run(document.getElementById(id), differenceActivated)
     }
 }
 
 object WebApp {
+  sealed abstract class DifferenceActivated(val boolean: Boolean)
+  final case object UseDifference extends DifferenceActivated(true)
+  final case object DoNotUseDifference extends DifferenceActivated(false)
+
   @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   def onLoading(a: => Unit): Unit =
     org.scalajs.dom.document

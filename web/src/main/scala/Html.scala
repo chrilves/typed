@@ -35,36 +35,6 @@ object Namespace {
 /** Represents an HTML/SVG tree whose reactions produce values of type A*/
 sealed abstract class Html[+A] {
   def map[B](f: A => B): Html[B]
-
-  import Html._
-
-  /** Draw a DOM node corresponding to this HTML/SVG tree */
-  @SuppressWarnings(
-    Array("org.wartremover.warts.Null", "org.wartremover.warts.Recursion"))
-  final def draw: Node =
-    this match {
-      case Text(s) =>
-        document.createTextNode(s)
-
-      case Tag(namespace, tag, attributes, reactions, children) =>
-        val b: Element = document.createElementNS(namespace.uri, tag)
-
-        attributes.foreach {
-          case (Attribute.Key(clef, ns), Attribute.Value(valeur)) =>
-            b.setAttributeNS(ns.map(_.value).getOrElse(null), clef, valeur)
-        }
-
-        reactions.foreach {
-          case Reaction(t, r) =>
-            b.addEventListener(t, r, false)
-        }
-
-        children.foreach { children =>
-          b.appendChild(children.draw)
-        }
-
-        b
-    }
 }
 
 object Html {
@@ -76,15 +46,15 @@ object Html {
   }
 
   /** Represents a tag node */
-  final case class Tag[+A](
+  sealed abstract case class Tag[+A](
       namespace: Namespace,
       tag: String,
       attributes: Map[Attribute.Key, Attribute.Value],
       reactions: Seq[Reaction[A]],
-      children: Seq[Html[A]]
+      children: List[Html[A]]
   ) extends Html[A] {
 
-    def map[B](f: A => B): Html[B] =
+    @inline final def map[B](f: A => B): Html[B] =
       Tag(
         namespace,
         tag,
@@ -92,5 +62,40 @@ object Html {
         reactions.map(_.map(f)),
         children.map(_.map(f))
       )
+  }
+  object Tag {
+
+    /** Dirty but makes the compiler happy */
+    private final class Tag[+A](
+        namespace: Namespace,
+        tag: String,
+        attributes: Map[Attribute.Key, Attribute.Value],
+        reactions: Seq[Reaction[A]],
+        children: List[Html[A]]
+    ) extends Html.Tag[A](namespace, tag, attributes, reactions, children)
+
+    def apply[A](
+        namespace: Namespace,
+        tag: String,
+        attributes: Map[Attribute.Key, Attribute.Value],
+        reactions: Seq[Reaction[A]],
+        children: List[Html[A]]
+    ): Html.Tag[A] = {
+
+      @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
+      def reduceChildren(l: List[Html[A]]): List[Html[A]] =
+        l match {
+          case Nil                       => Nil
+          case Text("") :: q             => q
+          case Text(s1) :: Text(s2) :: q => reduceChildren(Text(s1 + s2) :: q)
+          case tag :: q                  => tag :: reduceChildren(q)
+        }
+
+      new Tag[A](namespace,
+                 tag,
+                 attributes,
+                 reactions,
+                 reduceChildren(children))
+    }
   }
 }

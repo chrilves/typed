@@ -39,7 +39,7 @@ object html {
         case _                 => Nil
       }
 
-    Tag(namespace, tag, attributes, reactions, e)
+    Tag(namespace, tag, attributes, reactions, e.toList)
   }
 
   /** Type of node builders */
