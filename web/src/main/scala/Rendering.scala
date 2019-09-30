@@ -31,7 +31,8 @@ object Rendering {
   import Html._
 
   @SuppressWarnings(
-    Array("org.wartremover.warts.Null", "org.wartremover.warts.Recursion"))
+    Array("org.wartremover.warts.Null", "org.wartremover.warts.Recursion")
+  )
   def draw(h: Html[Unit]): Node =
     h match {
       case Text(s) =>
@@ -63,7 +64,7 @@ object Rendering {
       oldAttribtes: Map[Attribute.Key, Attribute.Value],
       oldReactions: Seq[Reaction[Unit]],
       newAttributes: Map[Attribute.Key, Attribute.Value],
-      newReactions: Seq[Reaction[Unit]],
+      newReactions: Seq[Reaction[Unit]]
   ): Unit = {
 
     // Removal of old reactions
@@ -97,8 +98,11 @@ object Rendering {
   }
 
   @SuppressWarnings(
-    Array("org.wartremover.warts.NonUnitStatements",
-          "org.wartremover.warts.Recursion"))
+    Array(
+      "org.wartremover.warts.NonUnitStatements",
+      "org.wartremover.warts.Recursion"
+    )
+  )
   def difference(
       parent: Node,
       old: Entry,
@@ -118,9 +122,10 @@ object Rendering {
 
       case Tag(namespace, tag, attributes, reactions, newChildren) =>
         old match {
-          case Entry(Tag(a_namespace, a_tag, a_attrs, a_reactions, oldChildren),
-                     oldElements: dom.raw.Element)
-              if a_tag === tag && a_namespace === namespace =>
+          case Entry(
+              Tag(a_namespace, a_tag, a_attrs, a_reactions, oldChildren),
+              oldElements: dom.raw.Element
+              ) if a_tag === tag && a_namespace === namespace =>
             update(oldElements, a_attrs, a_reactions, attributes, reactions)
 
             val oldEntries: Array[Entry] =
@@ -139,8 +144,10 @@ object Rendering {
             import Diff._
 
             @scala.annotation.tailrec
-            def applyDiffs(last: Option[Node],
-                           l: List[Diff[Entry, Html[Unit]]]): Unit =
+            def applyDiffs(
+                last: Option[Node],
+                l: List[Diff[Entry, Html[Unit]]]
+            ): Unit =
               l match {
                 case Nil =>
                   ()

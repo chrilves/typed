@@ -19,8 +19,10 @@ object Attribute {
 }
 
 /** To be given to addEventListener */
-final case class Reaction[+A](`type`: String,
-                              reaction: js.Function1[_ <: Event, A]) {
+final case class Reaction[+A](
+    `type`: String,
+    reaction: js.Function1[_ <: Event, A]
+) {
   def map[B](f: A => B): Reaction[B] =
     Reaction(`type`, reaction.andThen(f))
 }
@@ -91,11 +93,13 @@ object Html {
           case tag :: q                  => tag :: reduceChildren(q)
         }
 
-      new Tag[A](namespace,
-                 tag,
-                 attributes,
-                 reactions,
-                 reduceChildren(children))
+      new Tag[A](
+        namespace,
+        tag,
+        attributes,
+        reactions,
+        reduceChildren(children)
+      )
     }
   }
 }

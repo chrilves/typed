@@ -26,11 +26,16 @@ trait WebApp extends run.Application { self =>
     *  - The new state becomes the new current state and we loop.
     */
   @SuppressWarnings(
-    Array("org.wartremover.warts.Var",
-          "org.wartremover.warts.NonUnitStatements",
-          "org.wartremover.warts.Recursion"))
-  final def run(initialNode: Node,
-                differenceActivated: WebApp.DifferenceActivated): Unit = {
+    Array(
+      "org.wartremover.warts.Var",
+      "org.wartremover.warts.NonUnitStatements",
+      "org.wartremover.warts.Recursion"
+    )
+  )
+  final def run(
+      initialNode: Node,
+      differenceActivated: WebApp.DifferenceActivated
+  ): Unit = {
     final case class State(node: Node, view: Html[Unit], model: Model)
 
     var state: State =
@@ -47,9 +52,11 @@ trait WebApp extends run.Application { self =>
 
       val newNode: Node =
         if (differenceActivated.boolean)
-          Rendering.difference(parent,
-                               Rendering.Entry(state.view, state.node),
-                               newView)
+          Rendering.difference(
+            parent,
+            Rendering.Entry(state.view, state.node),
+            newView
+          )
         else {
           val n = Rendering.draw(newView)
           parent.replaceChild(n, oldNode)
@@ -68,7 +75,8 @@ trait WebApp extends run.Application { self =>
     */
   @inline final def runMain(
       id: String,
-      differenceActivated: WebApp.DifferenceActivated): Unit =
+      differenceActivated: WebApp.DifferenceActivated
+  ): Unit =
     WebApp.onLoading {
       run(document.getElementById(id), differenceActivated)
     }
@@ -85,8 +93,11 @@ object WebApp {
       .addEventListener("DOMContentLoaded", (_: Event) => a)
 
   @SuppressWarnings(
-    Array("org.wartremover.warts.AsInstanceOf",
-          "org.wartremover.warts.NonUnitStatements"))
+    Array(
+      "org.wartremover.warts.AsInstanceOf",
+      "org.wartremover.warts.NonUnitStatements"
+    )
+  )
   def download(blob: Blob, name: String): Unit = {
     val a = document
       .createElementNS(Namespace.HTML.uri, "a")

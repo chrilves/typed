@@ -24,8 +24,12 @@ object html {
   }
 
   /** Node creation helper */
-  def node_[A](namespace: Namespace, tag: String)(ar: Seq[Parameter[A]])(
-      e: Seq[Html[A]]): Tag[A] = {
+  def node_[A](
+      namespace: Namespace,
+      tag: String,
+      ar: Seq[Parameter[A]],
+      e: Seq[Html[A]]
+  ): Tag[A] = {
 
     val attributes: Map[Attribute.Key, Attribute.Value] =
       ar.flatMap {
@@ -42,42 +46,63 @@ object html {
     Tag(namespace, tag, attributes, reactions, e.toList)
   }
 
-  /** Type of node builders */
-  type MakeNode[A] = (Parameter[A]*) => (Html[A]*) => Tag[A]
-
   @inline
-  def node[A](tag: String, namespace: Namespace = Namespace.HTML): MakeNode[A] =
-    node_(namespace, tag) _
+  def node[A](tag: String, namespace: Namespace = Namespace.HTML)(
+      ar: Parameter[A]*
+  )(e: Html[A]*): Tag[A] =
+    node_(namespace, tag, ar, e)
 
-  def div[A]: MakeNode[A] = node[A]("div")
-  def span[A]: MakeNode[A] = node[A]("span")
-  def a[A]: MakeNode[A] = node[A]("a")
+  @inline final def div[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("div")(ar: _*)(e: _*)
+  @inline final def span[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("span")(ar: _*)(e: _*)
+  @inline final def a[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("a")(ar: _*)(e: _*)
 
-  def h1[A]: MakeNode[A] = node[A]("h1")
-  def h2[A]: MakeNode[A] = node[A]("h2")
-  def h3[A]: MakeNode[A] = node[A]("h3")
-  def h4[A]: MakeNode[A] = node[A]("h4")
+  @inline final def h1[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("h1")(ar: _*)(e: _*)
+  @inline final def h2[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("h2")(ar: _*)(e: _*)
+  @inline final def h3[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("h3")(ar: _*)(e: _*)
+  @inline final def h4[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("h4")(ar: _*)(e: _*)
+  @inline final def p[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("p")(ar: _*)(e: _*)
+  @inline final def text(s: String): Text = Text(s)
 
-  def p[A]: MakeNode[A] = node[A]("p")
-  def text(s: String): Text = Text(s)
+  @inline final def ul[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("ul")(ar: _*)(e: _*)
+  @inline final def li[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("li")(ar: _*)(e: _*)
 
-  def ul[A]: MakeNode[A] = node[A]("ul")
-  def li[A]: MakeNode[A] = node[A]("li")
+  @inline final def input[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("input")(ar: _*)(e: _*)
+  @inline final def button[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("button")(ar: _*)(e: _*)
 
-  def input[A]: MakeNode[A] = node[A]("input")
-  def button[A]: MakeNode[A] = node[A]("button")
-
-  def svg[A]: MakeNode[A] = node[A]("svg", Namespace.SVG)
-  def rect[A]: MakeNode[A] = node[A]("rect", Namespace.SVG)
-  def polyline[A]: MakeNode[A] = node[A]("polyline", Namespace.SVG)
-  def polygon[A]: MakeNode[A] = node[A]("polygon", Namespace.SVG)
-  def symbol[A]: MakeNode[A] = node[A]("symbol", Namespace.SVG)
-  def g[A]: MakeNode[A] = node[A]("g", Namespace.SVG)
-  def defs[A]: MakeNode[A] = node[A]("defs", Namespace.SVG)
-  def use[A]: MakeNode[A] = node[A]("use", Namespace.SVG)
-  def svgText[A]: MakeNode[A] = node[A]("text", Namespace.SVG)
-  def line[A]: MakeNode[A] = node[A]("line", Namespace.SVG)
-  def styleTag[A]: MakeNode[A] = node[A]("style", Namespace.HTML)
+  @inline final def svg[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("svg", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def rect[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("rect", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def polyline[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("polyline", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def polygon[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("polygon", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def symbol[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("symbol", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def g[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("g", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def defs[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("defs", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def use[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("use", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def svgText[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("text", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def line[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("line", Namespace.SVG)(ar: _*)(e: _*)
+  @inline final def styleTag[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("style", Namespace.HTML)(ar: _*)(e: _*)
 
   val nop: Parameter[Nothing] = Parameter.Nop
 
@@ -99,30 +124,31 @@ object html {
       )
     }
 
-  def `type`: MakeAttr = attr("type")
-  def media: MakeAttr = attr("media")
-  def id: MakeAttr = attr("id")
-  def `class`: MakeAttr = attr("class")
-  def value: MakeAttr = attr("value")
-  def x: MakeAttr = attr("x")
-  def y: MakeAttr = attr("y")
-  def width: MakeAttr = attr("width")
-  def height: MakeAttr = attr("height")
-  def style: MakeAttr = attr("style")
-  def transform: MakeAttr = attr("transform")
-  def viewBox: MakeAttr = attr("viewBox")
-  def points: MakeAttr = attr("points")
-  def fill: MakeAttr = attr("fill")
-  def stroke: MakeAttr = attr("stroke")
-  def strokeWidth: MakeAttr = attr("stroke-width")
-  def x1: MakeAttr = attr("x1")
-  def x2: MakeAttr = attr("x2")
-  def y1: MakeAttr = attr("y1")
-  def y2: MakeAttr = attr("y2")
-  def xlinkHref: MakeAttr = attr("xlink:href", "http://www.w3.org/1999/xlink")
-  def href: MakeAttr = attr("href")
-  def xmlns: MakeAttr = attr("xmlns")
-  def rel: MakeAttr = attr("rel")
+  @inline final def `type`: MakeAttr = attr("type")
+  @inline final def media: MakeAttr = attr("media")
+  @inline final def id: MakeAttr = attr("id")
+  @inline final def `class`: MakeAttr = attr("class")
+  @inline final def value: MakeAttr = attr("value")
+  @inline final def x: MakeAttr = attr("x")
+  @inline final def y: MakeAttr = attr("y")
+  @inline final def width: MakeAttr = attr("width")
+  @inline final def height: MakeAttr = attr("height")
+  @inline final def style: MakeAttr = attr("style")
+  @inline final def transform: MakeAttr = attr("transform")
+  @inline final def viewBox: MakeAttr = attr("viewBox")
+  @inline final def points: MakeAttr = attr("points")
+  @inline final def fill: MakeAttr = attr("fill")
+  @inline final def stroke: MakeAttr = attr("stroke")
+  @inline final def strokeWidth: MakeAttr = attr("stroke-width")
+  @inline final def x1: MakeAttr = attr("x1")
+  @inline final def x2: MakeAttr = attr("x2")
+  @inline final def y1: MakeAttr = attr("y1")
+  @inline final def y2: MakeAttr = attr("y2")
+  @inline final def xlinkHref: MakeAttr =
+    attr("xlink:href", "http://www.w3.org/1999/xlink")
+  @inline final def href: MakeAttr = attr("href")
+  @inline final def xmlns: MakeAttr = attr("xmlns")
+  @inline final def rel: MakeAttr = attr("rel")
 
   def checked(b: Boolean): Parameter[Nothing] =
     if (b)
@@ -146,8 +172,8 @@ object html {
       msg
     }
 
-  @inline def onsubmit[A](msg: => A): Parameter[A] = on0("submit")(msg)
-  @inline def onclick[A](msg: => A): Parameter[A] = on0("click")(msg)
+  @inline final def onsubmit[A](msg: => A): Parameter[A] = on0("submit")(msg)
+  @inline final def onclick[A](msg: => A): Parameter[A] = on0("click")(msg)
 
   @inline
   def onInputElement[A](ext: HTMLInputElement => A): Parameter[A] =

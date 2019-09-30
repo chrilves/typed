@@ -1,7 +1,6 @@
 package typed
 package category
 
-import scala.language.higherKinds
 import scala.collection.immutable.TreeSet
 import predicates._
 
@@ -16,7 +15,8 @@ trait Functor[C1 <: Category, C2 <: Category] {
   type mapType[A]
   def mapObj[A: dom.obj]: cod.obj[mapType[A]]
   def mapArr[A: dom.obj, B: dom.obj](
-      f: dom.arr[A, B]): cod.arr[mapType[A], mapType[B]]
+      f: dom.arr[A, B]
+  ): cod.arr[mapType[A], mapType[B]]
 }
 
 object Functor {

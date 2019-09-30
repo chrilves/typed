@@ -2,24 +2,27 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 // voir http://www.wartremover.org/
-lazy val warts =
-  Warts.allBut(Wart.FinalVal)
+lazy val warts = {
+  import Wart._
+  Warts.allBut(FinalVal, StringPlusAny)
+}
+  
 
 lazy val globalSettings: Seq[sbt.Def.SettingsDefinition] =
   Seq(
     inThisBuild(
       List(
         organization := "chrilves",
-        scalaVersion := "2.12.8",
+        scalaVersion := "2.13.0",
         version := "0.1.0-SNAPSHOT"
       )),
     updateOptions := updateOptions.value.withCachedResolution(true),
     wartremoverErrors in (Compile, compile) := warts,
     wartremoverWarnings in (Compile, console) := warts,
     //addCompilerPlugin("io.tryp" % "splain" % "0.3.4" cross CrossVersion.patch),
-    addCompilerPlugin("org.spire-math" % "kind-projector" % "0.9.9" cross CrossVersion.binary),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
     scalafmtOnCompile := true,
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.5" % Test
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
   )
 
 lazy val core =
@@ -39,7 +42,7 @@ lazy val web =
     .settings(globalSettings : _*)
     .settings(
       name := "typed-web",
-      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.6",
+      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.7",
       scalaJSUseMainModuleInitializer := false
     )
     .dependsOn(coreJS)

@@ -1,7 +1,6 @@
 package typed
 package category
 
-import scala.language.higherKinds
 import predicates._
 
 /*****************************************
@@ -33,15 +32,17 @@ trait Category { cat =>
     def eqArrow[A: obj, B: obj](f: arr[A, B], g: arr[A, B]): Boolean
 
     implicit final class ArrowEqOps[A, B](val self: arr[A, B]) {
-      @inline final def ===(g: arr[A, B])(implicit A: obj[A],
-                                          B: obj[B]): Boolean =
+      @inline final def ===(
+          g: arr[A, B]
+      )(implicit A: obj[A], B: obj[B]): Boolean =
         eqArrow(self, g)
     }
   }
 
   implicit final class ArrowOps[A, B](val self: arr[A, B]) {
-    @inline final def andThen[C: obj](g: arr[B, C])(implicit A: obj[A],
-                                                    B: obj[B]): arr[A, C] =
+    @inline final def andThen[C: obj](
+        g: arr[B, C]
+    )(implicit A: obj[A], B: obj[B]): arr[A, C] =
       cat.andThen(self, g)
   }
 }
@@ -71,7 +72,8 @@ trait ConstrainedScal[TypeClass[_]] extends Category {
   @inline final def id[A: TypeClass]: A => A = identity[A]
   @inline final def andThen[A: TypeClass, B: TypeClass, C: TypeClass](
       f: A => B,
-      g: B => C): A => C =
+      g: B => C
+  ): A => C =
     f.andThen(g)
 }
 

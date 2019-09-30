@@ -40,13 +40,16 @@ object Diff {
     * to get "PARBOILED"
     */
   @SuppressWarnings(
-    Array("org.wartremover.warts.Var",
-          "org.wartremover.warts.TraversableOps",
-          "org.wartremover.warts.NonUnitStatements",
-          "org.wartremover.warts.Recursion"))
-  def apply[A, B](eq: (A, B) => Boolean)(
-      a1: List[A],
-      a2: List[B]): (Int, List[Diff[A, B]]) = {
+    Array(
+      "org.wartremover.warts.Var",
+      "org.wartremover.warts.TraversableOps",
+      "org.wartremover.warts.NonUnitStatements",
+      "org.wartremover.warts.Recursion"
+    )
+  )
+  def apply[A, B](
+      eq: (A, B) => Boolean
+  )(a1: List[A], a2: List[B]): (Int, List[Diff[A, B]]) = {
     type Q = (Int, List[Diff[A, B]])
     type T = Array[Q]
 
@@ -109,9 +112,9 @@ object Diff {
     * to get "PARBOILED"
     */
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-  def myers[A, B](eq: (A, B) => Boolean)(
-      l: Array[A],
-      r: Array[B]): (Int, List[Diff[A, B]]) = {
+  def myers[A, B](
+      eq: (A, B) => Boolean
+  )(l: Array[A], r: Array[B]): (Int, List[Diff[A, B]]) = {
     import scala.annotation._
 
     type D = List[Diff[A, B]]
@@ -155,8 +158,12 @@ object Diff {
 
               val (x, p, suppr) =
                 if (k == -d || ((k != d) && v(k - 1)._1 < v(k + 1)._1))
-                  v(k + 1) match { case (_x, _p) => (_x, _p, false) } else
-                  v(k - 1) match { case (_x, _p) => (_x + 1, _p, true) }
+                  v(k + 1) match {
+                    case (_x, _p) => (_x, _p, false)
+                  } else
+                  v(k - 1) match {
+                    case (_x, _p) => (_x + 1, _p, true)
+                  }
 
               if (x > nl || y(x) > nr) auxK(k + 2)
               else {
