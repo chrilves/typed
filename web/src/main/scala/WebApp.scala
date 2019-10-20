@@ -13,6 +13,9 @@ trait WebApp extends run.Application { self =>
   /** The view returns an Html tree */
   def view(model: Model): Html[Msg]
 
+  /** The view returns an Html tree */
+  def documentReactions(model: Model): List[Reaction[Msg]]
+
   /** Run a Web Application on a given node
     *
     * The principle is simple:
@@ -36,12 +39,23 @@ trait WebApp extends run.Application { self =>
       initialNode: Node,
       differenceActivated: WebApp.DifferenceActivated
   ): Unit = {
-    final case class State(node: Node, view: Html[Unit], model: Model)
+    final case class State(
+        node: Node,
+        view: Html[Unit],
+        model: Model,
+        reactions: List[Reaction[Unit]]
+    )
 
     var state: State =
-      State(initialNode, Html.Text(""), initialModel)
+      State(initialNode, Html.Text(""), initialModel, Nil)
 
     def actualize(newModel: Model): Unit = {
+      // Diabling old document reactions
+      state.reactions.foreach { r =>
+        document.removeEventListener(r.`type`, r.reaction, false)
+      }
+
+      // Computing new view
       val newView: Html[Unit] =
         view(newModel).map { msg: Msg =>
           actualize(update(msg, state.model))
@@ -63,7 +77,20 @@ trait WebApp extends run.Application { self =>
           n
         }
 
-      state = State(newNode, newView, newModel)
+      // Adding new document reactions
+      val newDocumentReactions: List[Reaction[Unit]] =
+        documentReactions(newModel).map { react: Reaction[Msg] =>
+          react.map { msg: Msg =>
+            actualize(update(msg, state.model))
+          }
+        }
+
+      newDocumentReactions.foreach { r =>
+        document.addEventListener(r.`type`, r.reaction, false)
+      }
+
+      // Saving state
+      state = State(newNode, newView, newModel, newDocumentReactions)
     }
 
     actualize(initialModel)

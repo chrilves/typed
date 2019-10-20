@@ -27,6 +27,22 @@ final case class Reaction[+A](
     Reaction(`type`, reaction.andThen(f))
 }
 
+object Reaction {
+  @inline
+  def on[T <: Event, A](`type`: String)(f: js.Function1[T, A]): Reaction[A] =
+    Reaction(`type`, (e: T) => {
+      e.stopPropagation()
+      f(e)
+    })
+
+  @inline final def keyup[A](handler: KeyboardEvent => A): Reaction[A] =
+    on[KeyboardEvent, A]("keyup")(handler)
+  @inline final def keydown[A](handler: KeyboardEvent => A): Reaction[A] =
+    on[KeyboardEvent, A]("keydown")(handler)
+  @inline final def keypress[A](handler: KeyboardEvent => A): Reaction[A] =
+    on[KeyboardEvent, A]("keypress")(handler)
+}
+
 /** Namespace of the tag node, either HTML or SVG */
 sealed abstract class Namespace(val uri: String)
 object Namespace {

@@ -2,8 +2,9 @@ package typed
 package web
 package syntax
 
-import org.scalajs.dom.raw.{Event, HTMLInputElement}
+import org.scalajs.dom.raw.{Event, HTMLInputElement, KeyboardEvent}
 import Html._
+
 import scala.scalajs.js
 
 /** Small DSL to write HTML/SVG trees as if it would actually be HTML/SVG */
@@ -76,6 +77,12 @@ object html {
   @inline final def li[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
     node[A]("li")(ar: _*)(e: _*)
 
+  @inline final def em[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("em")(ar: _*)(e: _*)
+  @inline final def strong[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("strong")(ar: _*)(e: _*)
+  @inline final def code[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("code")(ar: _*)(e: _*)
   @inline final def input[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
     node[A]("input")(ar: _*)(e: _*)
   @inline final def button[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
@@ -103,6 +110,8 @@ object html {
     node[A]("line", Namespace.SVG)(ar: _*)(e: _*)
   @inline final def styleTag[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
     node[A]("style", Namespace.HTML)(ar: _*)(e: _*)
+  @inline final def video[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("video", Namespace.HTML)(ar: _*)(e: _*)
 
   val nop: Parameter[Nothing] = Parameter.Nop
 
@@ -149,6 +158,15 @@ object html {
   @inline final def href: MakeAttr = attr("href")
   @inline final def xmlns: MakeAttr = attr("xmlns")
   @inline final def rel: MakeAttr = attr("rel")
+  @inline final def src: MakeAttr = attr("src")
+  @inline val autoplay: Parameter[Nothing] = attr("autoplay")("autoplay")
+  @inline final def loop(b: Boolean): Parameter[Nothing] =
+    attr("loop")(if (b) "true" else "false")
+  @inline final def playsinline: Parameter[Nothing] =
+    attr("playsinline")("playsinline")
+  @inline final def controls: Parameter[Nothing] = attr("controls")("controls")
+  @inline final def muted: Parameter[Nothing] =
+    attr("muted")("muted")
 
   def checked(b: Boolean): Parameter[Nothing] =
     if (b)
@@ -161,10 +179,7 @@ object html {
 
   @inline
   def on[T <: Event, A](`type`: String)(f: js.Function1[T, A]): Parameter[A] =
-    Parameter.Reac(Reaction(`type`, (e: T) => {
-      e.stopPropagation()
-      f(e)
-    }))
+    Parameter.Reac(Reaction.on[T, A](`type`)(f))
 
   @inline
   def on0[A](`type`: String)(msg: => A): Parameter[A] =
@@ -174,6 +189,13 @@ object html {
 
   @inline final def onsubmit[A](msg: => A): Parameter[A] = on0("submit")(msg)
   @inline final def onclick[A](msg: => A): Parameter[A] = on0("click")(msg)
+
+  @inline final def onkeyup[A](handler: KeyboardEvent => A): Parameter[A] =
+    on[KeyboardEvent, A]("keyup")(handler)
+  @inline final def onkeydown[A](handler: KeyboardEvent => A): Parameter[A] =
+    on[KeyboardEvent, A]("keydown")(handler)
+  @inline final def onkeypress[A](handler: KeyboardEvent => A): Parameter[A] =
+    on[KeyboardEvent, A]("keypress")(handler)
 
   @inline
   def onInputElement[A](ext: HTMLInputElement => A): Parameter[A] =
