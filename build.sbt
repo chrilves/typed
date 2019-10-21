@@ -4,7 +4,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 // voir http://www.wartremover.org/
 lazy val warts = {
   import Wart._
-  Warts.allBut(FinalVal, StringPlusAny)
+  Warts.allBut(FinalVal, StringPlusAny, ToString)
 }
   
 

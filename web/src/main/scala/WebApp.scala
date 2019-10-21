@@ -11,10 +11,10 @@ import org.scalajs.dom.raw._
 trait WebApp extends run.Application { self =>
 
   /** The view returns an Html tree */
-  def view(model: Model): Html[Msg]
+  def view(model: Model): Html[Option[Msg]]
 
   /** The view returns an Html tree */
-  def documentReactions(model: Model): List[Reaction[Msg]]
+  def documentReactions(model: Model): List[Reaction[Option[Msg]]]
 
   /** Run a Web Application on a given node
     *
@@ -57,40 +57,46 @@ trait WebApp extends run.Application { self =>
 
       // Computing new view
       val newView: Html[Unit] =
-        view(newModel).map { msg: Msg =>
-          actualize(update(msg, state.model))
+        view(newModel).map {
+          case Some(msg) => actualize(update(msg, state.model))
+          case _         => ()
         }
 
       val oldNode: Node = state.node
       val parent: Node = oldNode.parentNode
 
-      val newNode: Node =
-        if (differenceActivated.boolean)
-          Rendering.difference(
-            parent,
-            Rendering.Entry(state.view, state.node),
-            newView
-          )
-        else {
-          val n = Rendering.draw(newView)
-          parent.replaceChild(n, oldNode)
-          n
-        }
-
       // Adding new document reactions
       val newDocumentReactions: List[Reaction[Unit]] =
-        documentReactions(newModel).map { react: Reaction[Msg] =>
-          react.map { msg: Msg =>
-            actualize(update(msg, state.model))
+        documentReactions(newModel).map { react: Reaction[Option[Msg]] =>
+          react.map {
+            case Some(msg) => actualize(update(msg, state.model))
+            case _         => ()
           }
         }
 
-      newDocumentReactions.foreach { r =>
-        document.addEventListener(r.`type`, r.reaction, false)
+      window.requestAnimationFrame { _ =>
+        val newNode: Node =
+          if (differenceActivated.boolean)
+            Rendering.difference(
+              parent,
+              Rendering.Entry(state.view, state.node),
+              newView
+            )
+          else {
+            val n = Rendering.draw(newView)
+            parent.replaceChild(n, oldNode)
+            n
+          }
+
+        newDocumentReactions.foreach { r =>
+          document.addEventListener(r.`type`, r.reaction, false)
+        }
+
+        // Saving state
+        state = State(newNode, newView, newModel, newDocumentReactions)
       }
 
-      // Saving state
-      state = State(newNode, newView, newModel, newDocumentReactions)
+      ()
     }
 
     actualize(initialModel)
@@ -112,7 +118,7 @@ trait WebApp extends run.Application { self =>
 object WebApp {
   sealed abstract class DifferenceActivated(val boolean: Boolean)
   final case object UseDifference extends DifferenceActivated(true)
-  final case object DoNotUseDifference extends DifferenceActivated(false)
+  final case object RedrawEverything extends DifferenceActivated(false)
 
   @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   def onLoading(a: => Unit): Unit =

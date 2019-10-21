@@ -29,7 +29,9 @@ final case class Reaction[+A](
 
 object Reaction {
   @inline
-  def on[T <: Event, A](`type`: String)(f: js.Function1[T, A]): Reaction[A] =
+  def on[T <: Event, A](
+      `type`: String
+  )(f: js.Function1[T, A]): Reaction[A] =
     Reaction(`type`, (e: T) => {
       e.stopPropagation()
       f(e)
@@ -53,6 +55,8 @@ object Namespace {
 /** Represents an HTML/SVG tree whose reactions produce values of type A*/
 sealed abstract class Html[+A] {
   def map[B](f: A => B): Html[B]
+  final def postProcessing(effect: Node => Node): Html[A] =
+    Html.PostProcessing(this, effect)
 }
 
 object Html {
@@ -117,5 +121,10 @@ object Html {
         reduceChildren(children)
       )
     }
+  }
+
+  final case class PostProcessing[+A](html: Html[A], effect: Node => Node)
+      extends Html[A] {
+    def map[B](f: A => B): Html[B] = PostProcessing(html.map(f), effect)
   }
 }

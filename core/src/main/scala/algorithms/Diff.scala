@@ -123,9 +123,31 @@ object Diff {
       case (0, nr)  => (nr, r.toList.map(Insertion(_)))
       case (nl, 0)  => (nl, l.toList.map(Deletion(_)))
       case (nl, nr) =>
-        // Creation of the array V (with indices from -vmax to +vmax, both included)
+        /* Creation of the array V (with indices from -vmax to +vmax, both included)
+
+            INVARIANT:
+
+            v[k] = (x,p)
+
+            means that:
+
+            applying p on l[0..x]  == r[0..x-k]
+
+            the cursor on l is positioned at x
+            the cursor on r is positioned at x-k
+
+            p is the diff between l[0..x] and r[0..x-k]
+         */
         object v {
+          /* The maximal number of differences between l and r
+             Reached when we need to Delete all one (l or r)
+             and insert all the other (l or r)
+           */
           val vmax = nl + nr
+
+          /* V considered uninitialized!
+             No read to v[k] until v[k] is set once
+           */
           val _v: Array[(Int, D)] = Array.fill(2 * vmax + 1)((0, Nil: D))
 
           @inline def offset(i: Int): Int = i + vmax
@@ -136,19 +158,53 @@ object Diff {
             _v(offset(k)) = a
         }
 
-        // Initialisation
+        // Initialisation: to safely read v[1]
         v(1) = (0, Nil: D)
 
+        /* Computes the number of difference and the diff list
+         *
+         * @param d the number of difference we are considering now
+         * @return (n, p) where n is the number of difference and p the diff list
+         */
         @tailrec
         def auxD(d: Int): (Int, D) = {
-          def auxK(k: Int): Option[(Int, D)] =
+          /* d = number of difference we are testing.
+             If there are actually d differneces the algorithm
+             terminates without calling auxD(d+1)
+           */
+
+          /* Try to advances the cursors l[0..x] and r[0..y] at most as possible
+           * Considers that there are exactly d differences.
+           * Using the previously computed array `v` for d = 0..(d-1)
+           * to test from: l[0..x] vs r[0..(x-d)]
+           *           to: l[0..x] vs r[0..(x+d)]
+           *
+           * @param k k=x-y
+           * @return
+           */
+          @tailrec
+          def auxK(k: Int): Option[(Int, D)] = {
             if (k > d)
+              /* If there is `d` differences, then x-d <= y <= x+d
+                 Where applying p on l[0..x] == r[0..y]
+
+                 So k = x - y <= d
+                 No need to test bigger k for this d
+               */
               None
             else {
               @inline
               def y(x: Int): Int = x - k
 
-              @tailrec @inline
+              /* Try to advance the cursors at most as possible
+               * Try to find the biggest n for which: l[x..x+n] == r[y..y+n]
+               *
+               * @param x
+               * @param p
+               * @return the new position x and the new diff list p
+               */
+              @tailrec
+              @inline
               def furthest(x: Int, p: D): (Int, D) = {
                 if (x < nl && y(x) < nr && eq(l(x), r(y(x))))
                   furthest(x + 1, Identical(l(x), r(y(x))) :: p)
@@ -165,9 +221,8 @@ object Diff {
                     case (_x, _p) => (_x + 1, _p, true)
                   }
 
-              if (x > nl || y(x) > nr) auxK(k + 2)
+              if (x > nl || y(x) > nr || y(x) < 0) auxK(k + 2)
               else {
-
                 val p2: D =
                   if (suppr)
                     if (x > 0) Deletion(l((x - 1))) :: p else p
@@ -184,6 +239,7 @@ object Diff {
                 }
               }
             }
+          }
 
           auxK(-d) match {
             case Some(ret) => ret

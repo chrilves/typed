@@ -13,6 +13,7 @@ object NodeType {
   final case class AnonymousTag(space: Namespace, tag: String) extends NodeType
   final case class NamedTag(space: Namespace, tag: String, id: Attribute.Value)
       extends NodeType
+  final case object PostProcessed extends NodeType
 
   def apply[A](html: Html[A]): NodeType =
     html match {
@@ -23,6 +24,7 @@ object NodeType {
           case Some(id) => NamedTag(namespace, tag, id)
           case None     => AnonymousTag(namespace, tag)
         }
+      case Html.PostProcessing(_, _) => PostProcessed
     }
 }
 
@@ -56,6 +58,9 @@ object Rendering {
         }
 
         b
+
+      case PostProcessing(html, effect) =>
+        effect(draw(html))
     }
 
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
@@ -189,5 +194,10 @@ object Rendering {
             parent.replaceChild(newNode, old.node)
             newNode
         }
+
+      case PostProcessing(html, effect) =>
+        val newNode = effect(draw(html))
+        parent.replaceChild(newNode, old.node)
+        newNode
     }
 }
