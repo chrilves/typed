@@ -16,6 +16,7 @@ lazy val globalSettings: Seq[sbt.Def.SettingsDefinition] =
         scalaVersion := "2.13.0",
         version := "0.1.0-SNAPSHOT"
       )),
+    scalacOptions += "-deprecation",
     updateOptions := updateOptions.value.withCachedResolution(true),
     wartremoverErrors in (Compile, compile) := warts,
     wartremoverWarnings in (Compile, console) := warts,

@@ -14,6 +14,12 @@ object Attribute {
   /** An HTML attribute is actually a pair of a name and a namespace */
   final case class Key(value: String, namespace: Option[Namespace])
 
+  object Key {
+    val `class`: Key = Key("class", None)
+    val style: Key = Key("style", None)
+    val mergeable: Set[Key] = Set(`class`, style)
+  }
+
   /** The value of the HTML attribute */
   final case class Value(value: String) extends AnyVal
 }
@@ -55,7 +61,8 @@ object Namespace {
 /** Represents an HTML/SVG tree whose reactions produce values of type A*/
 sealed abstract class Html[+A] {
   def map[B](f: A => B): Html[B]
-  final def postProcessing(effect: Node => Node): Html[A] =
+
+  @inline final def postProcessing(effect: Node => Node): Html[A] =
     Html.PostProcessing(this, effect)
 }
 

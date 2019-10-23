@@ -22,6 +22,31 @@ object html {
         extends Parameter[Nothing]
     final case class Reac[+A](reac: Reaction[A]) extends Parameter[A]
     final case object Nop extends Parameter[Nothing]
+
+    def toAttributes[A](p: Seq[Parameter[A]])(
+        old: Map[Attribute.Key, Attribute.Value]
+    ): Map[Attribute.Key, Attribute.Value] =
+      p.foldLeft(old) {
+        case (m, attr) =>
+          import Attribute._
+
+          attr match {
+            case Attr((k, v)) if Key.mergeable.contains(k) =>
+              m + (k ->
+                (m.get(k) match {
+                  case Some(v2) =>
+                    Attribute.Value(v2.value + " " + v.value)
+                  case _ =>
+                    v
+                }))
+
+            case Attr(kv) =>
+              m + kv
+
+            case _ =>
+              m
+          }
+      }
   }
 
   /** Node creation helper */
@@ -33,10 +58,7 @@ object html {
   ): Tag[A] = {
 
     val attributes: Map[Attribute.Key, Attribute.Value] =
-      ar.flatMap {
-        case Parameter.Attr(cd) => List(cd)
-        case _                  => Nil
-      }.toMap
+      Parameter.toAttributes(ar)(Map.empty[Attribute.Key, Attribute.Value])
 
     val reactions: Seq[Reaction[A]] =
       ar.flatMap {
@@ -112,6 +134,8 @@ object html {
   // SVG Namespace Tags
   //
 
+  @inline final def circle[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
+    node[A]("circle", Namespace.SVG)(ar: _*)(e: _*)
   @inline final def defs[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
     node[A]("defs", Namespace.SVG)(ar: _*)(e: _*)
   @inline final def g[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
@@ -143,19 +167,20 @@ object html {
   type MakeAttr = String => Parameter[Nothing]
 
   @inline
-  @SuppressWarnings(Array("org.wartremover.warts.DefaultArguments"))
-  def attr(clef: String, namespace: String = ""): MakeAttr =
-    v => {
-      val ns: Option[Attribute.Namespace] =
-        if (namespace.isEmpty)
-          None
-        else
-          Some(Attribute.Namespace(namespace))
+  def attrOfKey(key: Attribute.Key): MakeAttr =
+    v => Parameter.Attr((key, Attribute.Value(v)))
 
-      Parameter.Attr(
-        (Attribute.Key(clef, ns), Attribute.Value(v))
-      )
-    }
+  @inline
+  @SuppressWarnings(Array("org.wartremover.warts.DefaultArguments"))
+  def attr(clef: String, namespace: String = ""): MakeAttr = {
+    val ns: Option[Attribute.Namespace] =
+      if (namespace.isEmpty)
+        None
+      else
+        Some(Attribute.Namespace(namespace))
+
+    attrOfKey(Attribute.Key(clef, ns))
+  }
 
   @inline final def alt: MakeAttr = attr("alt")
   @inline val autoplay: Parameter[Nothing] = attr("autoplay")("")
@@ -165,8 +190,10 @@ object html {
     else
       Parameter.Nop
   @inline final def cite: MakeAttr = attr("cite")
-  @inline final def `class`: MakeAttr = attr("class")
+  @inline final def `class`: MakeAttr = attrOfKey(Attribute.Key.`class`)
   @inline final def controls: Parameter[Nothing] = attr("controls")("")
+  @inline final def cx: MakeAttr = attr("cx")
+  @inline final def cy: MakeAttr = attr("cy")
   @inline final def id: MakeAttr = attr("id")
   @inline final def fill: MakeAttr = attr("fill")
   @inline final def height: MakeAttr = attr("height")
@@ -179,11 +206,13 @@ object html {
   @inline final def playsinline: Parameter[Nothing] =
     attr("playsinline")("")
   @inline final def points: MakeAttr = attr("points")
+  @inline final def preserveAspectRatio: MakeAttr = attr("preserveAspectRatio")
+  @inline final def r: MakeAttr = attr("r")
   @inline final def rel: MakeAttr = attr("rel")
   @inline final def src: MakeAttr = attr("src")
   @inline final def stroke: MakeAttr = attr("stroke")
   @inline final def strokeWidth: MakeAttr = attr("stroke-width")
-  @inline final def style: MakeAttr = attr("style")
+  @inline final def style: MakeAttr = attrOfKey(Attribute.Key.style)
   @inline final def transform: MakeAttr = attr("transform")
   @inline final def `type`: MakeAttr = attr("type")
   @inline final def value: MakeAttr = attr("value")
@@ -244,4 +273,34 @@ object html {
   @inline
   def oncheck[A](reaction: Boolean => A): Parameter[A] =
     onInputElement[A](i => reaction(i.checked))
+
+  implicit final class HtmlOps[A](val self: Html[A]) extends AnyVal {
+    @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
+    def add(params: Parameter[A]*): Html[A] =
+      self match {
+        case Html.Text(s) =>
+          span(params: _*)(text(s))
+
+        case Html.Tag(namespace, tag, attributes, reactions, children) =>
+          val newAttributes: Map[Attribute.Key, Attribute.Value] =
+            Parameter.toAttributes(params)(attributes)
+
+          val newReactions: Seq[Reaction[A]] =
+            params.flatMap {
+              case Parameter.Reac(r) => List(r)
+              case _                 => Nil
+            }
+
+          Tag(
+            namespace,
+            tag,
+            newAttributes,
+            reactions ++ newReactions,
+            children
+          )
+
+        case Html.PostProcessing(html, effect) =>
+          Html.PostProcessing(html.add(params: _*), effect)
+      }
+  }
 }
