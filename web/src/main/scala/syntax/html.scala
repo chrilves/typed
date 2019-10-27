@@ -2,7 +2,7 @@ package typed
 package web
 package syntax
 
-import org.scalajs.dom.raw.{Event, HTMLInputElement, KeyboardEvent}
+import org.scalajs.dom.raw.{Event, HTMLInputElement, KeyboardEvent, MouseEvent}
 import Html._
 
 import scala.scalajs.js
@@ -251,12 +251,18 @@ object html {
   @inline final def onclick[A](msg: => A): Parameter[A] = on0("click")(msg)
 
   @inline final def onkeyup[A](handler: KeyboardEvent => A): Parameter[A] =
-    on[KeyboardEvent, A]("keyup")(handler)
+    Parameter.Reac(Reaction.keyup(handler))
   @inline final def onkeydown[A](handler: KeyboardEvent => A): Parameter[A] =
-    on[KeyboardEvent, A]("keydown")(handler)
+    Parameter.Reac(Reaction.keydown(handler))
   @inline final def onkeypress[A](handler: KeyboardEvent => A): Parameter[A] =
-    on[KeyboardEvent, A]("keypress")(handler)
+    Parameter.Reac(Reaction.keypress(handler))
 
+  @inline final def onmousedown[A](handler: MouseEvent => A): Parameter[A] =
+    Parameter.Reac(Reaction.mousedown(handler))
+  @inline final def onmouseup[A](handler: MouseEvent => A): Parameter[A] =
+    Parameter.Reac(Reaction.mouseup(handler))
+  @inline final def ondblclick[A](handler: MouseEvent => A): Parameter[A] =
+    Parameter.Reac(Reaction.dblclick(handler))
   @inline
   def onInputElement[A](ext: HTMLInputElement => A): Parameter[A] =
     on[Event, A]("input") { (e: Event) =>
@@ -276,10 +282,10 @@ object html {
 
   implicit final class HtmlOps[A](val self: Html[A]) extends AnyVal {
     @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-    def add(params: Parameter[A]*): Html[A] =
+    def add(params: Parameter[A]*)(newChildren: Html[A]*): Html[A] =
       self match {
         case Html.Text(s) =>
-          span(params: _*)(text(s))
+          span(params: _*)(text(s) +: newChildren: _*)
 
         case Html.Tag(namespace, tag, attributes, reactions, children) =>
           val newAttributes: Map[Attribute.Key, Attribute.Value] =
@@ -296,11 +302,11 @@ object html {
             tag,
             newAttributes,
             reactions ++ newReactions,
-            children
+            children ++ newChildren.toList
           )
 
         case Html.PostProcessing(html, effect) =>
-          Html.PostProcessing(html.add(params: _*), effect)
+          Html.PostProcessing(html.add(params: _*)(newChildren: _*), effect)
       }
   }
 }

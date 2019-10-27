@@ -49,6 +49,15 @@ object Reaction {
     on[KeyboardEvent, A]("keydown")(handler)
   @inline final def keypress[A](handler: KeyboardEvent => A): Reaction[A] =
     on[KeyboardEvent, A]("keypress")(handler)
+
+  @inline final def mouseup[A](handler: MouseEvent => A): Reaction[A] =
+    on[MouseEvent, A]("mouseup")(handler)
+  @inline final def mousedown[A](handler: MouseEvent => A): Reaction[A] =
+    on[MouseEvent, A]("mousedown")(handler)
+  @inline final def dblclick[A](handler: MouseEvent => A): Reaction[A] =
+    on[MouseEvent, A]("dblclick")(handler)
+  @inline final def click[A](handler: MouseEvent => A): Reaction[A] =
+    on[MouseEvent, A]("click")(handler)
 }
 
 /** Namespace of the tag node, either HTML or SVG */
