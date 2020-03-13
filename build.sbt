@@ -13,17 +13,17 @@ lazy val globalSettings: Seq[sbt.Def.SettingsDefinition] =
     inThisBuild(
       List(
         organization := "chrilves",
-        scalaVersion := "2.13.0",
+        scalaVersion := "2.13.1",
         version := "0.1.0-SNAPSHOT"
       )),
     scalacOptions += "-deprecation",
     updateOptions := updateOptions.value.withCachedResolution(true),
     wartremoverErrors in (Compile, compile) := warts,
     wartremoverWarnings in (Compile, console) := warts,
-    //addCompilerPlugin("io.tryp" % "splain" % "0.3.4" cross CrossVersion.patch),
+    addCompilerPlugin("io.tryp" % "splain" % "0.5.1" cross CrossVersion.patch),
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary),
     scalafmtOnCompile := true,
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.1" % Test
   )
 
 lazy val core =
@@ -43,7 +43,7 @@ lazy val web =
     .settings(globalSettings : _*)
     .settings(
       name := "typed-web",
-      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.9.7",
+      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.0.0",
       scalaJSUseMainModuleInitializer := false
     )
     .dependsOn(coreJS)

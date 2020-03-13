@@ -143,7 +143,7 @@ object Diff {
              Reached when we need to Delete all one (l or r)
              and insert all the other (l or r)
            */
-          val vmax = nl + nr
+          val vmax: Int = nl + nr
 
           /* V considered uninitialized!
              No read to v[k] until v[k] is set once
