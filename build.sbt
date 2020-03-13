@@ -1,6 +1,3 @@
-// shadow sbt-scalajs' crossProject and CrossType until Scala.js 1.0.0 is released
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-
 // voir http://www.wartremover.org/
 lazy val warts = {
   import Wart._
