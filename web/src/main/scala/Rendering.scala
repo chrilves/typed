@@ -53,9 +53,7 @@ object Rendering {
             b.addEventListener(t, r, false)
         }
 
-        children.foreach { enfant =>
-          b.appendChild(draw(enfant))
-        }
+        children.foreach { enfant => b.appendChild(draw(enfant)) }
 
         b
 

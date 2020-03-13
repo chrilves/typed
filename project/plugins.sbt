@@ -1,10 +1,10 @@
 // Environnement
-addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.4.2")
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.5.0")
 
 // Développement
 addSbtPlugin("org.wartremover" % "sbt-wartremover" % "2.4.5")
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.0.6")
-addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.8")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.3.2")
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.11")
 addSbtPlugin("org.duhemm" % "sbt-errors-summary" % "0.6.3")
 
 // ScalaJS

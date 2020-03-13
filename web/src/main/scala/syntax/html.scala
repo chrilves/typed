@@ -243,9 +243,7 @@ object html {
 
   @inline
   def on0[A](`type`: String)(msg: => A): Parameter[A] =
-    on[Event, A](`type`) { _ =>
-      msg
-    }
+    on[Event, A](`type`) { _ => msg }
 
   @inline final def onsubmit[A](msg: => A): Parameter[A] = on0("submit")(msg)
   @inline final def onclick[A](msg: => A): Parameter[A] = on0("click")(msg)

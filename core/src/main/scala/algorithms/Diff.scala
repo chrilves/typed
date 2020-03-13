@@ -216,7 +216,8 @@ object Diff {
                 if (k == -d || ((k != d) && v(k - 1)._1 < v(k + 1)._1))
                   v(k + 1) match {
                     case (_x, _p) => (_x, _p, false)
-                  } else
+                  }
+                else
                   v(k - 1) match {
                     case (_x, _p) => (_x + 1, _p, true)
                   }
