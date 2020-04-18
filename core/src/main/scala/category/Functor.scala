@@ -3,63 +3,51 @@ package category
 
 import scala.collection.immutable.TreeSet
 import predicates._
+import typed.category.Category.AllTypes
 
 /************************************************
   *       Functors
   */
 /** Generic functors between two categories */
-trait Functor[C1 <: Category, C2 <: Category] {
-  val dom: C1
-  val cod: C2
+trait Functor[O1[_], ~>[_, _], O2[_], ~~>[_, _], F[_]] {
+  def domain: Category[O1, ~>]
+  def codomain: Category[O2, ~>]
 
-  type mapType[A]
-  def mapObj[A: dom.obj]: cod.obj[mapType[A]]
-  def mapArr[A: dom.obj, B: dom.obj](
-      f: dom.arr[A, B]
-  ): cod.arr[mapType[A], mapType[B]]
+  def validity[A: O1]: O2[F[A]]
+  def map[A: O1, B: O1](f: A ~> B): F[A] ~~> F[B]
 }
 
-object Functor {
-  type Aux[C1 <: Category, C2 <: Category, F[_]] = Functor[C1, C2] {
-    type mapType[A] = F[A]
-  }
+trait FunctorOfFunctions[O1[_], O2[_], F[_]]
+    extends Functor[O1, Function, O2, Function, F] {
+  def domain: Category[O1, Function] = new CategoryOfFunctions[O1]
+  def codomain: Category[O2, Function] = new CategoryOfFunctions[O2]
 }
 
-/** Functors from a category to itself */
-trait EndoFunctor[C <: Category] extends Functor[C, C] {
-  val cat: C
-
-  final val dom: cat.type = cat
-  final val cod: cat.type = cat
-
-  import cat._
-
-  def mapObj[A: obj]: obj[mapType[A]]
-  def mapArr[A: obj, B: obj](f: arr[A, B]): arr[mapType[A], mapType[B]]
+trait EndoFunctor[O[_], ~>[_, _], F[_]] extends Functor[O, ~>, O, ~>, F] {
+  def category: Category[O, ~>]
+  def domain: Category[O, ~>] = category
+  def codomain: Category[O, ~>] = category
 }
 
-object EndoFunctor {
-  type Aux[C <: Category, F[_]] = EndoFunctor[C] { type mapType[A] = F[A] }
+trait EndoFunctorOfFunctions[O[_], F[_]]
+    extends EndoFunctor[O, Function, F]
+    with FunctorOfFunctions[O, O, F] {
+  final val category: Category[O, Function] = new CategoryOfFunctions[O]
+  override def domain: Category[O, Function] = super.domain
+  override def codomain: Category[O, Function] = super.codomain
 }
 
-/** Functors as in ScalaZ/Cats */
-trait RegularFunctor[F[_]] extends EndoFunctor[Scal.type] {
-  def map[A, B](f: A => B)(fa: F[A]): F[B]
-
-  val cat: Scal.type = Scal
-
-  final type mapType[A] = F[A]
-  def mapObj[A: AlwaysUnit]: AlwaysUnit[F[A]] = AlwaysUnit.SingleValue
-  def mapArr[A: AlwaysUnit, B: AlwaysUnit](f: A => B): F[A] => F[B] =
-    map[A, B](f) _
+trait UsualFunctor[F[_]] extends EndoFunctorOfFunctions[AllTypes, F] {
+  def validity[A: AllTypes]: AllTypes[F[A]] = implicitly
 }
 
 /*****************************************
   *  Example of functors
   */
 /** The classic {{{List}}} fonctor */
-object FunctorList extends RegularFunctor[List] {
-  def map[A, B](f: A => B)(fa: List[A]): List[B] = fa.map(f)
+object FunctorList extends UsualFunctor[List] {
+  def map[A: AllTypes, B: AllTypes](f: A => B): List[A] => List[B] =
+    (l: List[A]) => l.map(f)
 }
 
 /** {{{TreeSet}}} also is a functor but between different categories.
@@ -67,16 +55,12 @@ object FunctorList extends RegularFunctor[List] {
   * types of the form {{{TreeSet[elem]}}}
   */
 object FunctorTreeSet
-    extends Functor[OrderedCategory.type, TreeSetCategory.type] {
-  val dom: OrderedCategory.type = OrderedCategory
-  val cod: TreeSetCategory.type = TreeSetCategory
+    extends FunctorOfFunctions[Ordering, IsA[TreeSet, *], TreeSet] {
 
-  final type mapType[A] = TreeSet[A]
+  def validity[A: Ordering]: IsA[TreeSet, TreeSet[A]] =
+    IsA.proof[TreeSet, A]
 
-  def mapObj[A: Ordering]: IsTreeSet[TreeSet[A]] =
-    IsTreeSet.Proof[A](implicitly[Ordering[A]])
-
-  def mapArr[A: Ordering, B: Ordering](f: A => B): TreeSet[A] => TreeSet[B] =
+  def map[A: Ordering, B: Ordering](f: A => B): TreeSet[A] => TreeSet[B] =
     (setA: TreeSet[A]) => {
       val empty = TreeSet.empty[B](implicitly[Ordering[B]])
       setA.foldLeft[TreeSet[B]](empty) {
@@ -86,12 +70,8 @@ object FunctorTreeSet
 }
 
 /** {{{TreeSet}}} is also an endo functor [[OrderedCategory]] to itself */
-object EndoFunctorTreeSet extends EndoFunctor[OrderedCategory.type] {
-  val cat: OrderedCategory.type = OrderedCategory
-
-  final type mapType[A] = TreeSet[A]
-
-  def mapObj[A: Ordering]: Ordering[TreeSet[A]] =
+object EndoFunctorTreeSet extends EndoFunctorOfFunctions[Ordering, TreeSet] {
+  def validity[A: Ordering]: Ordering[TreeSet[A]] =
     new Ordering[TreeSet[A]] {
       def compare(x: TreeSet[A], y: TreeSet[A]): Int = {
         def aux(l: TreeSet[A], r: TreeSet[A]): Int =
@@ -106,7 +86,7 @@ object EndoFunctorTreeSet extends EndoFunctor[OrderedCategory.type] {
       }
     }
 
-  def mapArr[A: Ordering, B: Ordering](f: A => B): TreeSet[A] => TreeSet[B] =
+  def map[A: Ordering, B: Ordering](f: A => B): TreeSet[A] => TreeSet[B] =
     (setA: TreeSet[A]) => {
       val empty = TreeSet.empty[B](implicitly[Ordering[B]])
       setA.foldLeft[TreeSet[B]](empty) {

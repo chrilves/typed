@@ -1,8 +1,6 @@
 package typed
 package predicates
 
-import scala.collection.immutable.TreeSet
-
 /** A proof that types {{{A}}} and {{{B}}}
   * are the same type.
   */
@@ -71,28 +69,4 @@ object IsA {
 
   @inline implicit def proof[F[_], elem]: IsA[F, F[elem]] =
     Proof[F, elem]()
-}
-
-/** A type-class proving that the type
-  * {{{A}}} is of the form {{{TreeSet[elem]}}}.
-  */
-sealed abstract class IsTreeSet[A] {
-  type elem
-  val orderedElem: Ordering[elem]
-
-  def fold[F[_]](elim: IsTreeSet.Elim[F]): F[A]
-}
-object IsTreeSet {
-  final case class Proof[elem_](orderedElem: Ordering[elem_])
-      extends IsTreeSet[TreeSet[elem_]] {
-    final type elem = elem_
-
-    @inline def fold[F[_]](f: IsTreeSet.Elim[F]): F[TreeSet[elem]] =
-      f[elem](orderedElem)
-  }
-
-  /** Elimination rule for Proof */
-  trait Elim[F[_]] {
-    def apply[elem](value: Ordering[elem]): F[TreeSet[elem]]
-  }
 }

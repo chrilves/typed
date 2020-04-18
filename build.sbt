@@ -1,7 +1,7 @@
 // voir http://www.wartremover.org/
 lazy val warts = {
   import Wart._
-  Warts.allBut(FinalVal, StringPlusAny, ToString)
+  Warts.allBut(FinalVal, StringPlusAny, ToString, Any, Nothing)
 }
   
 
