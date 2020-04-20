@@ -1,6 +1,8 @@
 package typed
 package run
 
+import javax.jws.Oneway
+
 import scala.annotation.tailrec
 
 trait Semigroup[A] {
@@ -119,6 +121,35 @@ object IO {
       tag: T
   )(io: IO[R, W, T, E, A]): IO[R, W, T, E, A] =
     Tag(tag, io)
+
+  trait Transformation[R, W, T1, T2] { self =>
+    def apply[E, A](tag: T1, io: IO[R, W, T2, E, A]): IO[R, W, T2, E, A]
+  }
+
+  /** Tag operation: instrument */
+  private final case class Instrument[R, W, T1, T2, +E, +A](
+      io: IO[R, W, T1, E, A],
+      transformation: Transformation[R, W, T1, T2]
+  ) extends IO[R, W, T2, E, A]
+
+  @inline def instrument[R, W, T1, T2, E, A](
+      io: IO[R, W, T1, E, A]
+  )(transformation: Transformation[R, W, T1, T2]): IO[R, W, T2, E, A] = {
+
+    def oneStep(io2: IO[R, W, T1, E, A]): IO[R, W, T2, E, A] =
+      io2 match {
+        case Pure(a)    => Pure(a)
+        case Error(e)   => Error(e)
+        case _: Read[r] => Read()
+        case Write(w)   => Write(w)
+        case _          => Instrument(io2, transformation)
+      }
+
+    io match {
+      case Tag(t, i) => transformation(t, oneStep(i))
+      case _         => oneStep(io)
+    }
+  }
 
   /** Tag operation: Map */
   private final case class MapTag[-R, +W, T1, +T2, +E, +A](
@@ -248,42 +279,46 @@ object IO {
     flatten(map(io)(f))
 
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-  def toProcess[R, W, T, E: Semigroup, A](
-      mainIO: IO[R, W, T, E, A]
-  ): Process[R, W, E, A] = {
-    type Ret = Process[R, W, E, A]
+  def normalize[R, W, T, E, A](
+    mainIO: IO[R, W, T, E, A]
+  ): IO[R, W, T, E, A] = {
+    type Ret = IO[R, W, T, E, A]
 
-    @inline def auxTrick[R0, W0, T0, E0, E1: Semigroup, A0](
-        io: IO[R0, W0, T0, E0, A0],
-        fr: R => R0,
-        fw: W0 => W,
-        ft: T0 => T,
-        fe: E0 => E1,
-        k: A0 => Ret,
-        h: E1 => Ret
-    ): Ret =
-      aux(io, fr, fw, ft, fe, k, h)
-
-    @tailrec def aux[R0, W0, T0, E0, E1: Semigroup, A0](
-        io: IO[R0, W0, T0, E0, A0],
-        fr: R => R0,
-        fw: W0 => W,
-        ft: T0 => T,
-        fe: E0 => E1,
-        k: A0 => Ret,
-        h: E1 => Ret
+    @tailrec def aux[R0,W0,T0,E0](
+      io: IO[R0,W0,T0,E0,A],
+      fr: R => R0,
+      fw: W0 => W,
+      ft: T0 => T,
+      fe: E0 => E
     ): Ret =
       io match {
-        case Pure(a)        => k(a)
-        case Error(e1)      => h(fe(e1))
-        case _: Read[R0]    => Process.Input(fr.andThen(k))
-        case Write(w)       => Process.Output(fw(w), () => k(()))
-        case Tag(_, i)      => aux(i, fr, fw, ft, fe, k, h)
-        case Defer(d)       => aux(d(), fr, fw, ft, fe, k, h)
-        case MapRead(i, f)  => aux(i, fr.andThen(f), fw, ft, fe, k, h)
-        case MapWrite(i, f) => aux(i, fr, f.andThen(fw), ft, fe, k, h)
-        case MapTag(i, f)   => aux(i, fr, fw, f.andThen(ft), fe, k, h)
-        case MapError(i, f) => aux(i, fr, fw, ft, f.andThen(fe), k, h)
+        case MapRead(i, f)    => aux(i, fr.andThen(f), fw, ft, fe)
+        case MapWrite(i, f)   => aux(i, fr, f.andThen(fw), ft, fe)
+        case MapTag(i, f)     => aux(i, fr, fw, f.andThen(ft), fe)
+        case MapError(i, f)   => aux(i, fr, fw, ft, f.andThen(fe))
+
+        case ins : Instrument[R0,W0,t,T0,E0,A] => {
+          def aux2(io2: IO[R0,W0,t,E0,A]): IO[R0,W0,T0,E0,A] =
+            io2 match {
+              case Pure(a) => Pure(a)
+              case Error(e) => Error(e)
+              case Read() => Read()
+              case Write(w) => Write(w)
+              case Defer(d) => aux2(d())
+              case Ap(fun, arg) => Ap(aux2(fun), aux2(arg))
+              case c@CatchError(i,h) => CatchError(aux(i), h.andThen(aux2))(c.errorSemiGroupInstance)
+              case Flatten(v) => flatMap(aux2(v))(aux2(_))
+            }
+        }
+
+        case Pure(a)          => Pure(a)
+        case Error(e0)        => Error(fr(e0))
+        case _: Read[R0]      => MapRead(Read(), fr)
+        case Write(w0)        => Write(fw(w0))
+        case Defer(d)         => aux(d(), fr, fw, ft, fe)
+
+        case Tag(t, i)        =>
+        case Instrument(i, t) =>
         case ap: Ap[R0, W0, T0, E0, x, A0] =>
           aux(
             ap.fun,
@@ -336,6 +371,99 @@ object IO {
       Process.Error(_)
     )
   }
+
+
+  @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
+  def toProcess[R, W, T, E: Semigroup, A](
+      mainIO: IO[R, W, T, E, A]
+  ): Process[R, W, E, A] = {
+    type Ret = Process[R, W, E, A]
+
+    @inline def auxTrick[R0, W0, T0, E0, E1: Semigroup, A0](
+        io: IO[R0, W0, T0, E0, A0],
+        fr: R => R0,
+        fw: W0 => W,
+        ft: T0 => T,
+        fe: E0 => E1,
+        k: A0 => Ret,
+        h: E1 => Ret
+    ): Ret =
+      aux(io, fr, fw, ft, fe, k, h)
+
+    @tailrec def aux[R0, W0, T0, E0, E1: Semigroup, A0](
+        io: IO[R0, W0, T0, E0, A0],
+        fr: R => R0,
+        fw: W0 => W,
+        ft: T0 => T,
+        fe: E0 => E1,
+        k: A0 => Ret,
+        h: E1 => Ret
+    ): Ret =
+      io match {
+        case Pure(a)          => k(a)
+        case Error(e1)        => h(fe(e1))
+        case _: Read[R0]      => Process.Input(fr.andThen(k))
+        case Write(w)         => Process.Output(fw(w), () => k(()))
+        case Tag(_, i)        => aux(i, fr, fw, ft, fe, k, h)
+        case Instrument(i, t) =>
+        case Defer(d)         => aux(d(), fr, fw, ft, fe, k, h)
+        case MapRead(i, f)    => aux(i, fr.andThen(f), fw, ft, fe, k, h)
+        case MapWrite(i, f)   => aux(i, fr, f.andThen(fw), ft, fe, k, h)
+        case MapTag(i, f)     => aux(i, fr, fw, f.andThen(ft), fe, k, h)
+        case MapError(i, f)   => aux(i, fr, fw, ft, f.andThen(fe), k, h)
+        case ap: Ap[R0, W0, T0, E0, x, A0] =>
+          aux(
+            ap.fun,
+            fr,
+            fw,
+            ft,
+            fe,
+            (f: x => A0) =>
+              auxTrick(ap.arg, fr, fw, ft, fe, (x: x) => k(f(x)), h),
+            (e1: E1) =>
+              auxTrick(
+                ap.arg,
+                fr,
+                fw,
+                ft,
+                fe,
+                (_: x) => h(e1),
+                (e2: E1) => h(Semigroup[E1].combine(e1, e2))
+              )
+          )
+        case Flatten(v) =>
+          aux[R0, W0, T0, E0, E1, IO[R0, W0, T0, E0, A0]](
+            v,
+            fr,
+            fw,
+            ft,
+            fe,
+            (i: IO[R0, W0, T0, E0, A0]) => auxTrick(i, fr, fw, ft, fe, k, h),
+            h
+          )
+        case ce: CatchError[R0, W0, T0, e, E0, A0] =>
+          aux[R0, W0, T0, e, e, A0](
+            ce.io,
+            fr,
+            fw,
+            ft,
+            identity[e],
+            k,
+            ce.handler.andThen(auxTrick(_, fr, fw, ft, fe, k, h))
+          )(ce.errorSemiGroupInstance)
+      }
+
+    aux[R, W, T, E, E, A](
+      mainIO,
+      identity[R],
+      identity[W],
+      identity[T],
+      identity[E],
+      Process.Result(_),
+      Process.Error(_)
+    )
+  }
+
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
   def run[R, W: Semigroup, T, E: Semigroup, A](
       mainIO: IO[R, W, T, E, A]
@@ -354,19 +482,21 @@ object IO {
         fr: R => R0,
         fw: W0 => W,
         ft: T0 => T,
-        fe: E0 => E1
+        fe: E0 => E1,
+        trans: Transformation[]
     ): (Option[W], Either[E1, A0]) =
       io match {
-        case Pure(a)        => (None, Right(a))
-        case Error(e1)      => (None, Left(fe(e1)))
-        case _: Read[R0]    => (None, Right(fr(r)))
-        case Write(w)       => (Some(fw(w)), Right(()))
-        case Tag(_, i)      => aux(i, fr, fw, ft, fe)
-        case Defer(d)       => aux(d(), fr, fw, ft, fe)
-        case MapRead(i, f)  => aux(i, fr.andThen(f), fw, ft, fe)
-        case MapWrite(i, f) => aux(i, fr, f.andThen(fw), ft, fe)
-        case MapTag(i, f)   => aux(i, fr, fw, f.andThen(ft), fe)
-        case MapError(i, f) => aux(i, fr, fw, ft, f.andThen(fe))
+        case Pure(a)          => (None, Right(a))
+        case Error(e1)        => (None, Left(fe(e1)))
+        case _: Read[R0]      => (None, Right(fr(r)))
+        case Write(w)         => (Some(fw(w)), Right(()))
+        case Tag(t, i)        => aux(i, fr, fw, ft, fe)
+        case Instrument(i, t) => aux()
+        case Defer(d)         => aux(d(), fr, fw, ft, fe)
+        case MapRead(i, f)    => aux(i, fr.andThen(f), fw, ft, fe)
+        case MapWrite(i, f)   => aux(i, fr, f.andThen(fw), ft, fe)
+        case MapTag(i, f)     => aux(i, fr, fw, f.andThen(ft), fe)
+        case MapError(i, f)   => aux(i, fr, fw, ft, f.andThen(fe))
         case ap: Ap[R0, W0, T0, E0, x, A0] =>
           val (ow1, rf) = aux(ap.fun, fr, fw, ft, fe)
           val (ow2, ra) = aux(ap.arg, fr, fw, ft, fe)
@@ -410,5 +540,4 @@ object IO {
       identity[E]
     )
   }
-
 }

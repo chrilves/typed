@@ -4,6 +4,7 @@ package web
 import org.scalajs._
 import org.scalajs.dom._
 import org.scalajs.dom.raw._
+import typed.run.IO
 
 /** A Web Application.
   * Just like a Text Application but the view return an Html tree
@@ -145,4 +146,10 @@ object WebApp {
     document.body.removeChild(a)
     dom.raw.URL.revokeObjectURL(url)
   }
+}
+
+trait Component[Model, Msg, +T, +E, +A] {
+  def update(msg: Msg): Model => IO[Any, Nothing, T, E, Model]
+  def task(msg: Msg): IO[Model, Msg, T, E, Unit]
+  def view: Model => IO[Any, Nothing, T, E, Html[Option[Msg]]]
 }
