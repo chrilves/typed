@@ -3,20 +3,19 @@ package web
 
 import org.scalajs.dom
 import dom.document
-import org.scalajs.dom.raw._
+import org.scalajs.dom._
 import org.scalajs.dom.ext._
 import typed.algorithms.Diff
 
-sealed abstract class NodeType
-object NodeType {
-  final case class Text(value: String) extends NodeType
-  final case class AnonymousTag(space: Namespace, tag: String) extends NodeType
-  final case class NamedTag(space: Namespace, tag: String, id: Attribute.Value)
-      extends NodeType
-  final case object PostProcessed extends NodeType
+enum NodeType:
+  case Text(value: String)
+  case AnonymousTag(space: Namespace, tag: String)
+  case NamedTag(space: Namespace, tag: String, id: Attribute.Value)
+  case PostProcessed
 
+object NodeType:
   def apply[A](html: Html[A]): NodeType =
-    html match {
+    html match
       case Html.Text(s) =>
         Text(s)
       case Html.Tag(namespace, tag, attrs, _, _) =>
@@ -25,15 +24,17 @@ object NodeType {
           case None     => AnonymousTag(namespace, tag)
         }
       case Html.PostProcessing(_, _) => PostProcessed
-    }
-}
 
 object Rendering {
   final case class Entry(html: Html[Unit], node: Node)
   import Html._
 
   @SuppressWarnings(
-    Array("org.wartremover.warts.Null", "org.wartremover.warts.Recursion")
+    Array(
+      "org.wartremover.warts.Null",
+      "org.wartremover.warts.Recursion",
+      "org.wartremover.warts.GetOrElseNull"
+    )
   )
   def draw(h: Html[Unit]): Node =
     h match {
@@ -43,14 +44,12 @@ object Rendering {
       case Tag(space, tag, attributs, reactions, children) =>
         val b: Element = document.createElementNS(space.uri, tag)
 
-        attributs.foreach {
-          case (Attribute.Key(clef, ns), Attribute.Value(value)) =>
-            b.setAttributeNS(ns.map(_.value).getOrElse(null), clef, value)
+        attributs.foreach { case (Attribute.Key(clef, ns), Attribute.Value(value)) =>
+          b.setAttributeNS(ns.map(_.value).getOrElse(null), clef, value)
         }
 
-        reactions.foreach {
-          case Reaction(t, r) =>
-            b.addEventListener(t, r, false)
+        reactions.foreach { case Reaction(t, r) =>
+          b.addEventListener(t, r, false)
         }
 
         children.foreach { enfant => b.appendChild(draw(enfant)) }
@@ -61,7 +60,9 @@ object Rendering {
         effect(draw(html))
     }
 
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  @SuppressWarnings(
+    Array("org.wartremover.warts.Null", "org.wartremover.warts.GetOrElseNull")
+  )
   def update(
       node: Element,
       oldAttribtes: Map[Attribute.Key, Attribute.Value],
@@ -71,32 +72,28 @@ object Rendering {
   ): Unit = {
 
     // Removal of old reactions
-    oldReactions.foreach {
-      case Reaction(t, r) =>
-        node.removeEventListener(t, r, false)
+    oldReactions.foreach { case Reaction(t, r) =>
+      node.removeEventListener(t, r, false)
     }
 
     // Setup of new reactions
-    newReactions.foreach {
-      case Reaction(t, r) =>
-        node.addEventListener(t, r, false)
+    newReactions.foreach { case Reaction(t, r) =>
+      node.addEventListener(t, r, false)
     }
 
     // Removed attributes
-    (oldAttribtes.keys.toSet -- newAttributes.keys).foreach {
-      case Attribute.Key(clef, ns) =>
-        node.removeAttributeNS(ns.map(_.value).getOrElse(null), clef)
+    (oldAttribtes.keys.toSet -- newAttributes.keys).foreach { case Attribute.Key(clef, ns) =>
+      node.removeAttributeNS(ns.map(_.value).getOrElse(null), clef)
     }
 
     // Updated and added Attributes
-    newAttributes.foreach {
-      case (c @ Attribute.Key(clef, ns), v @ Attribute.Value(value)) =>
-        oldAttribtes.get(c) match {
-          case Some(av) if av === v =>
-            ()
-          case Some(_) =>
-            node.setAttributeNS(ns.map(_.value).getOrElse(null), clef, value)
-        }
+    newAttributes.foreach { case (c @ Attribute.Key(clef, ns), v @ Attribute.Value(value)) =>
+      oldAttribtes.get(c) match {
+        case Some(av) if av === v =>
+          ()
+        case _ =>
+          node.setAttributeNS(ns.map(_.value).getOrElse(null), clef, value)
+      }
     }
   }
 
@@ -114,8 +111,8 @@ object Rendering {
     newHtml match {
       case Text(s) =>
         old match {
-          case Entry(Text(u), text: dom.raw.Text) =>
-            if (u =/= s) text.textContent = s
+          case Entry(Text(u), text: dom.Text) =>
+            if u =/= s then text.textContent = s
             text
           case _ =>
             val newNode = document.createTextNode(s)
@@ -126,8 +123,8 @@ object Rendering {
       case Tag(namespace, tag, attributes, reactions, newChildren) =>
         old match {
           case Entry(
-              Tag(a_namespace, a_tag, a_attrs, a_reactions, oldChildren),
-              oldElements: dom.raw.Element
+                Tag(a_namespace, a_tag, a_attrs, a_reactions, oldChildren),
+                oldElements: dom.Element
               ) if a_tag === tag && a_namespace === namespace =>
             update(oldElements, a_attrs, a_reactions, attributes, reactions)
 

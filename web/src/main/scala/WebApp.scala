@@ -3,10 +3,8 @@ package web
 
 import org.scalajs._
 import org.scalajs.dom._
-import org.scalajs.dom.raw._
 
-/** A Web Application.
-  * Just like a Text Application but the view return an Html tree
+/** A Web Application. Just like a Text Application but the view return an Html tree
   */
 trait WebApp extends run.Application { self =>
 
@@ -19,14 +17,14 @@ trait WebApp extends run.Application { self =>
   /** Run a Web Application on a given node
     *
     * The principle is simple:
-    *  - Just like any {{{Application}}}, at any given time there is a
-    *    "current model" which is the state of the application, a value of type [[Model]].
-    *  - The function [[view]] compute the Html tree corresponding the current value of the model.
-    *  - This tree enables building a Node of the DOM
-    *  - This new Node replaces the old one.
-    *  - Each event (thus any reaction executed) returns a un message (of type [[Msg]]).
-    *  - This message updates the state of the application via the [[update]] function.
-    *  - The new state becomes the new current state and we loop.
+    *   - Just like any {{{Application}}}, at any given time there is a "current model" which is the
+    *     state of the application, a value of type [[Model]].
+    *   - The function [[view]] compute the Html tree corresponding the current value of the model.
+    *   - This tree enables building a Node of the DOM
+    *   - This new Node replaces the old one.
+    *   - Each event (thus any reaction executed) returns a un message (of type [[Msg]]).
+    *   - This message updates the state of the application via the [[update]] function.
+    *   - The new state becomes the new current state and we loop.
     */
   @SuppressWarnings(
     Array(
@@ -38,7 +36,7 @@ trait WebApp extends run.Application { self =>
   final def run(
       initialNode: Node,
       differenceActivated: WebApp.DifferenceActivated
-  ): Unit = {
+  ): Unit =
     final case class State(
         node: Node,
         view: Html[Unit],
@@ -49,7 +47,7 @@ trait WebApp extends run.Application { self =>
     var state: State =
       State(initialNode, Html.Text(""), initialModel, Nil)
 
-    def actualize(newModel: Model): Unit = {
+    def actualize(newModel: Model): Unit =
       // Diabling old document reactions
       state.reactions.foreach { r =>
         document.removeEventListener(r.`type`, r.reaction, false)
@@ -63,11 +61,11 @@ trait WebApp extends run.Application { self =>
         }
 
       val oldNode: Node = state.node
-      val parent: Node = oldNode.parentNode
+      val parent: Node  = oldNode.parentNode
 
       // Adding new document reactions
       val newDocumentReactions: List[Reaction[Unit]] =
-        documentReactions(newModel).map { react: Reaction[Option[Msg]] =>
+        documentReactions(newModel).map { (react: Reaction[Option[Msg]]) =>
           react.map {
             case Some(msg) => actualize(update(msg, state.model))
             case _         => ()
@@ -76,17 +74,17 @@ trait WebApp extends run.Application { self =>
 
       window.requestAnimationFrame { _ =>
         val newNode: Node =
-          if (differenceActivated.boolean)
+          if differenceActivated.boolean
+          then
             Rendering.difference(
               parent,
               Rendering.Entry(state.view, state.node),
               newView
             )
-          else {
+          else
             val n = Rendering.draw(newView)
             parent.replaceChild(n, oldNode)
             n
-          }
 
         newDocumentReactions.foreach { r =>
           document.addEventListener(r.`type`, r.reaction, false)
@@ -97,16 +95,15 @@ trait WebApp extends run.Application { self =>
       }
 
       ()
-    }
 
     actualize(initialModel)
-  }
 
   /** Run the application on a node
     *
-    * @param id attribute of the node
+    * @param id
+    *   attribute of the node
     */
-  @inline final def runMain(
+  inline final def runMain(
       id: String,
       differenceActivated: WebApp.DifferenceActivated
   ): Unit =
@@ -115,27 +112,26 @@ trait WebApp extends run.Application { self =>
     }
 }
 
-object WebApp {
+object WebApp:
   sealed abstract class DifferenceActivated(val boolean: Boolean)
-  final case object UseDifference extends DifferenceActivated(true)
-  final case object RedrawEverything extends DifferenceActivated(false)
+  case object UseDifference    extends DifferenceActivated(true)
+  case object RedrawEverything extends DifferenceActivated(false)
 
   @SuppressWarnings(Array("org.wartremover.warts.Nothing"))
   def onLoading(a: => Unit): Unit =
     org.scalajs.dom.document
       .addEventListener("DOMContentLoaded", (_: Event) => a)
-
   @SuppressWarnings(
     Array(
       "org.wartremover.warts.AsInstanceOf",
       "org.wartremover.warts.NonUnitStatements"
     )
   )
-  def download(blob: Blob, name: String): Unit = {
+  def download(blob: Blob, name: String): Unit =
     val a = document
       .createElementNS(Namespace.HTML.uri, "a")
       .asInstanceOf[HTMLAnchorElement]
-    val url = dom.raw.URL.createObjectURL(blob)
+    val url = dom.URL.createObjectURL(blob)
     a.href = url
     a.rel = "noopener"
     a.setAttribute("download", name)
@@ -143,6 +139,4 @@ object WebApp {
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    dom.raw.URL.revokeObjectURL(url)
-  }
-}
+    dom.URL.revokeObjectURL(url)

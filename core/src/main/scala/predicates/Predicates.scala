@@ -1,72 +1,57 @@
 package typed
 package predicates
 
-/** A proof that types {{{A}}} and {{{B}}}
-  * are the same type.
+/** A proof that types {{{A}}} and {{{B}}} are the same type.
   */
-sealed trait EqT[A, B] {
-  def fold[F[_, _]](v: EqT.Elim[F]): F[A, B]
+enum EqT[A, B]:
+  case Proof[A]() extends EqT[A, A]
 
-  @inline final def to[G[_]]: G[A] =:= G[B] = {
+  def fold[F[_, _]](v: EqT.Elim[F]): F[A, B] =
+    this match
+      case Proof() => v[A]
+
+  inline final def to[G[_]]: G[A] =:= G[B] =
     type F[X, Y] = G[X] =:= G[Y]
     fold[F] {
-      new EqT.Elim[F] {
-        def apply[Z]: F[Z, Z] = implicitly[G[Z] =:= G[Z]]
-      }
+      new EqT.Elim[F]:
+        def apply[Z]: F[Z, Z] = summon[G[Z] =:= G[Z]]
     }
-  }
 
-  @inline final def from[G[_]]: G[B] =:= G[A] = {
+  inline final def from[G[_]]: G[B] =:= G[A] =
     type F[X, Y] = G[Y] =:= G[X]
     fold[F] {
-      new EqT.Elim[F] {
-        def apply[Z]: F[Z, Z] = implicitly[G[Z] =:= G[Z]]
-      }
+      new EqT.Elim[F]:
+        def apply[Z]: F[Z, Z] = summon[G[Z] =:= G[Z]]
     }
-  }
-}
 
-object EqT {
-  trait Elim[F[_, _]] {
+object EqT:
+  trait Elim[F[_, _]]:
     def apply[X]: F[X, X]
-  }
 
-  final case class Proof[A]() extends EqT[A, A] {
-    def fold[F[_, _]](v: EqT.Elim[F]): F[A, A] = v[A]
-  }
+  inline def proof[A]: EqT[A, A] = Proof[A]()
 
-  @inline def proof[A]: EqT[A, A] = Proof[A]()
-}
-
-/** A proof that the type {{{A}}} is of
-  * the form {{{F[elem]}}} for some type
-  * {{{elem}}}.
+/** A proof that the type {{{A}}} is of the form {{{F[elem]}}} for some type {{{elem}}}.
   */
-sealed abstract class IsA[F[_], A] {
+sealed abstract class IsA[F[_], A]:
   type elem
   def fold[G[_]](p: G[F[elem]]): G[A]
 
-  @inline implicit final def to[H[_]]: H[A] =:= H[F[elem]] = {
+  inline given to[H[_]]: (H[A] =:= H[F[elem]]) =
     type G[X] = H[X] =:= H[F[elem]]
-    fold[G](implicitly[H[F[elem]] =:= H[F[elem]]])
-  }
+    fold[G](summon[H[F[elem]] =:= H[F[elem]]])
 
-  @inline implicit final def from[H[_]]: H[F[elem]] =:= H[A] = {
+  inline given from[H[_]]: (H[F[elem]] =:= H[A]) =
     type G[X] = H[F[elem]] =:= H[X]
-    fold[G](implicitly[H[F[elem]] =:= H[F[elem]]])
-  }
+    fold[G](summon[H[F[elem]] =:= H[F[elem]]])
 
-  def eqT: EqT[F[elem], A] = {
+  def eqT: EqT[F[elem], A] =
     type G[X] = EqT[F[elem], X]
     fold[G](EqT.proof[F[elem]])
-  }
-}
-object IsA {
-  final case class Proof[F[_], X]() extends IsA[F, F[X]] {
-    final type elem = X
-    @inline final def fold[G[_]](p: G[F[elem]]): G[F[X]] = p
-  }
 
-  @inline implicit def proof[F[_], elem]: IsA[F, F[elem]] =
+object IsA:
+  final case class Proof[F[_], X]() extends IsA[F, F[X]]:
+    final type elem = X
+    inline final def fold[G[_]](p: G[F[elem]]): G[F[X]] = p
+
+  inline given proof[F[_], elem]: IsA[F, F[elem]] =
     Proof[F, elem]()
-}
