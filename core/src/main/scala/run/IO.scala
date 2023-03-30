@@ -122,11 +122,11 @@ object IO:
       io: IO[R1, W, T, E, A]
   )(f: R2 => R1): IO[R2, W, T, E, A] =
     io match
-      case _: Read[r] => map(Read[R2]())(f)
-      case Pure(a)    => Pure(a)
-      case Error(e)   => Error(e)
-      case Write(w)   => Write(w)
-      case _          => MapRead(io, f)
+      case Read()   => map(Read[R2]())(f)
+      case Pure(a)  => Pure(a)
+      case Error(e) => Error(e)
+      case Write(w) => Write(w)
+      case _        => MapRead(io, f)
 
   inline def write[W](value: W): IO[Any, W, Nothing, Nothing, Unit] =
     Write[W](value)
@@ -135,11 +135,11 @@ object IO:
       io: IO[R, W1, T, E, A]
   )(f: W1 => W2): IO[R, W2, T, E, A] =
     io match
-      case _: Read[r] => Read()
-      case Pure(a)    => Pure(a)
-      case Error(e)   => Error(e)
-      case Write(w)   => Write(f(w))
-      case _          => MapWrite(io, f)
+      case Read()   => Read()
+      case Pure(a)  => Pure(a)
+      case Error(e) => Error(e)
+      case Write(w) => Write(f(w))
+      case _        => MapWrite(io, f)
 
   inline def tag[R, W, T, E, A](
       tag: T
@@ -151,11 +151,11 @@ object IO:
   )(f: T1 => T2): IO[R, W, T2, E, A] =
     def oneStep(m: IO[R, W, T1, E, A]): IO[R, W, T2, E, A] =
       m match
-        case _: Read[r] => Read()
-        case Pure(a)    => Pure(a)
-        case Error(e)   => Error(e)
-        case Write(w)   => Write(w)
-        case _          => MapTag(m, f)
+        case Read()   => Read()
+        case Pure(a)  => Pure(a)
+        case Error(e) => Error(e)
+        case Write(w) => Write(w)
+        case _        => MapTag(m, f)
 
     io match
       case Tag(t, i) => Tag(f(t), oneStep(i))
@@ -176,11 +176,11 @@ object IO:
       io: IO[R, W, T, E1, A]
   )(f: E1 => E2): IO[R, W, T, E2, A] =
     io match
-      case _: Read[r] => Read()
-      case Pure(a)    => Pure(a)
-      case Error(e)   => Error(f(e))
-      case Write(w)   => Write(w)
-      case _          => MapError(io, f)
+      case Read()   => Read()
+      case Pure(a)  => Pure(a)
+      case Error(e) => Error(f(e))
+      case Write(w) => Write(w)
+      case _        => MapError(io, f)
 
   inline def pure[A](value: A): IO[Any, Nothing, Nothing, Nothing, A] =
     Pure(value)

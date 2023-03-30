@@ -44,7 +44,7 @@ object Rendering {
       case Tag(space, tag, attributs, reactions, children) =>
         val b: Element = document.createElementNS(space.uri, tag)
 
-        attributs.foreach { case (Attribute.Key(clef, ns), Attribute.Value(value)) =>
+        attributs.foreachEntry { case (Attribute.Key(clef, ns), Attribute.Value(value)) =>
           b.setAttributeNS(ns.map(_.value).getOrElse(null), clef, value)
         }
 
@@ -87,7 +87,7 @@ object Rendering {
     }
 
     // Updated and added Attributes
-    newAttributes.foreach { case (c @ Attribute.Key(clef, ns), v @ Attribute.Value(value)) =>
+    newAttributes.foreachEntry { case (c @ Attribute.Key(clef, ns), v @ Attribute.Value(value)) =>
       oldAttribtes.get(c) match {
         case Some(av) if av === v =>
           ()
