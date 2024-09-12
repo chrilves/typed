@@ -2,9 +2,7 @@ package typed
 package web
 
 import org.scalajs.dom
-import dom.document
-import org.scalajs.dom._
-import org.scalajs.dom.ext._
+import org.scalajs.dom.*
 import typed.algorithms.Diff
 
 enum NodeType:
@@ -138,7 +136,7 @@ object Rendering {
 
             val diffs: List[Diff[Entry, Html[Unit]]] =
               Diff
-                .myers(sameNodeType _)(oldEntries, newChildren.toArray)
+                .myers(sameNodeType)(oldEntries, newChildren.toArray)
                 ._2
 
             import Diff._

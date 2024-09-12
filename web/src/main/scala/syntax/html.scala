@@ -75,82 +75,82 @@ object html:
   //
 
   inline final def a[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("a")(ar: _*)(e: _*)
+    node[A]("a")(ar*)(e*)
   inline final def blockquote[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("blockquote")(ar: _*)(e: _*)
+    node[A]("blockquote")(ar*)(e*)
   inline final def br[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("br")(ar: _*)(e: _*)
+    node[A]("br")(ar*)(e*)
   inline final def button[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("button")(ar: _*)(e: _*)
+    node[A]("button")(ar*)(e*)
   inline final def code[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("code")(ar: _*)(e: _*)
+    node[A]("code")(ar*)(e*)
   inline final def div[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("div")(ar: _*)(e: _*)
+    node[A]("div")(ar*)(e*)
   inline final def em[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("em")(ar: _*)(e: _*)
+    node[A]("em")(ar*)(e*)
   inline final def h1[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("h1")(ar: _*)(e: _*)
+    node[A]("h1")(ar*)(e*)
   inline final def h2[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("h2")(ar: _*)(e: _*)
+    node[A]("h2")(ar*)(e*)
   inline final def h3[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("h3")(ar: _*)(e: _*)
+    node[A]("h3")(ar*)(e*)
   inline final def h4[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("h4")(ar: _*)(e: _*)
+    node[A]("h4")(ar*)(e*)
   inline final def img[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("img")(ar: _*)(e: _*)
+    node[A]("img")(ar*)(e*)
   inline final def input[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("input")(ar: _*)(e: _*)
+    node[A]("input")(ar*)(e*)
   inline final def li[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("li")(ar: _*)(e: _*)
+    node[A]("li")(ar*)(e*)
   inline final def ol[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("ol")(ar: _*)(e: _*)
+    node[A]("ol")(ar*)(e*)
   inline final def p[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("p")(ar: _*)(e: _*)
+    node[A]("p")(ar*)(e*)
   inline final def pre[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("pre")(ar: _*)(e: _*)
+    node[A]("pre")(ar*)(e*)
   inline final def q[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("q")(ar: _*)(e: _*)
+    node[A]("q")(ar*)(e*)
   inline final def small[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("small")(ar: _*)(e: _*)
+    node[A]("small")(ar*)(e*)
   inline final def span[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("span")(ar: _*)(e: _*)
+    node[A]("span")(ar*)(e*)
   inline final def strong[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("strong")(ar: _*)(e: _*)
+    node[A]("strong")(ar*)(e*)
   inline final def styleTag[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("style")(ar: _*)(e: _*)
+    node[A]("style")(ar*)(e*)
   inline final def text(s: String): Text =
     Text(s)
   inline final def ul[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("ul")(ar: _*)(e: _*)
+    node[A]("ul")(ar*)(e*)
   inline final def video[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("video")(ar: _*)(e: _*)
+    node[A]("video")(ar*)(e*)
 
   ////////////////////////////////////////////////////////////////
   // SVG Namespace Tags
   //
 
   inline final def circle[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("circle", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("circle", Namespace.SVG)(ar*)(e*)
   inline final def defs[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("defs", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("defs", Namespace.SVG)(ar*)(e*)
   inline final def g[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("g", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("g", Namespace.SVG)(ar*)(e*)
   inline final def line[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("line", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("line", Namespace.SVG)(ar*)(e*)
   inline final def polygon[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("polygon", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("polygon", Namespace.SVG)(ar*)(e*)
   inline final def polyline[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("polyline", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("polyline", Namespace.SVG)(ar*)(e*)
   inline final def rect[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("rect", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("rect", Namespace.SVG)(ar*)(e*)
   inline final def svg[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("svg", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("svg", Namespace.SVG)(ar*)(e*)
   inline final def symbol[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("symbol", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("symbol", Namespace.SVG)(ar*)(e*)
   inline final def svgText[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("text", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("text", Namespace.SVG)(ar*)(e*)
   inline final def use[A](ar: Parameter[A]*)(e: Html[A]*): Tag[A] =
-    node[A]("use", Namespace.SVG)(ar: _*)(e: _*)
+    node[A]("use", Namespace.SVG)(ar*)(e*)
 
   ////////////////////////////////////////////////////////////////
   // Static Paramaters
@@ -268,7 +268,7 @@ object html:
     def add(params: Parameter[A]*)(newChildren: Html[A]*): Html[A] =
       self match
         case Html.Text(s) =>
-          span(params: _*)(text(s) +: newChildren: _*)
+          span(params*)(text(s) +: newChildren*)
 
         case Html.Tag(namespace, tag, attributes, reactions, children) =>
           val newAttributes: Map[Attribute.Key, Attribute.Value] =
@@ -289,4 +289,4 @@ object html:
           )
 
         case Html.PostProcessing(html, effect) =>
-          Html.PostProcessing(html.add(params: _*)(newChildren: _*), effect)
+          Html.PostProcessing(html.add(params*)(newChildren*), effect)

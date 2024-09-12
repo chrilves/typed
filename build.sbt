@@ -10,15 +10,16 @@ lazy val globalSettings: Seq[sbt.Def.SettingsDefinition] =
     inThisBuild(
       List(
         organization := "chrilves",
-        scalaVersion := "3.2.2",
+        scalaVersion := "3.5.0",
         version := "0.1.0-SNAPSHOT"
       )),
-    scalacOptions += "-deprecation",
+    scalacOptions -= "-Ykind-projector",
+    scalacOptions ++= Seq("-deprecation", "-Xkind-projector"),
     updateOptions := updateOptions.value.withCachedResolution(true),
     Compile/compile/wartremoverErrors := warts,
     Compile/console/wartremoverErrors := warts,
     scalafmtOnCompile := true,
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.15" % Test
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
   )
 
 lazy val core =
@@ -40,7 +41,7 @@ lazy val web =
     .settings(
       name := "typed-web",
       scalacOptions += "-scalajs",
-      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
+      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.0",
       scalaJSUseMainModuleInitializer := false,
     )
     .dependsOn(coreJS)

@@ -298,7 +298,7 @@ object IO:
             identity[e],
             k,
             ce.handler.andThen(auxTrick(_, fr, fw, ft, fe, k, h))
-          )(ce.errorSemiGroupInstance)
+          )(using ce.errorSemiGroupInstance)
 
     aux[R, W, T, E, E, A](
       mainIO,
@@ -365,7 +365,7 @@ object IO:
 
         case ce: CatchError[R0, W0, T0, e, E0, A0] =>
           val (ow1, ret1) =
-            aux(ce.io, fr, fw, ft, identity[e])(ce.errorSemiGroupInstance)
+            aux(ce.io, fr, fw, ft, identity[e])(using ce.errorSemiGroupInstance)
           ret1 match {
             case Left(e1) =>
               val (ow2, ret2) = aux(ce.handler(e1), fr, fw, ft, fe)

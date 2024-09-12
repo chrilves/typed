@@ -15,7 +15,7 @@ object Ex:
   inline def apply[F[_]]: Builder[F] = new Builder[F]
 
   final class Builder[F[_]]:
-    inline def apply[A](value_ : A)(using evidence_ : F[A]): Ex[F] =
+    def apply[A](value_ : A)(using evidence_ : F[A]): Ex[F] =
       new Ex[F]:
         type hidden = A
         val value: hidden       = value_

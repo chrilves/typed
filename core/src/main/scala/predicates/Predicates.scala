@@ -10,14 +10,14 @@ enum EqT[A, B]:
     this match
       case Proof() => v[A]
 
-  inline final def to[G[_]]: G[A] =:= G[B] =
+  final def to[G[_]]: G[A] =:= G[B] =
     type F[X, Y] = G[X] =:= G[Y]
     fold[F] {
       new EqT.Elim[F]:
         def apply[Z]: F[Z, Z] = summon[G[Z] =:= G[Z]]
     }
 
-  inline final def from[G[_]]: G[B] =:= G[A] =
+  final def from[G[_]]: G[B] =:= G[A] =
     type F[X, Y] = G[Y] =:= G[X]
     fold[F] {
       new EqT.Elim[F]:
