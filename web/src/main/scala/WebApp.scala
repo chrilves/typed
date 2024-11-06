@@ -30,12 +30,14 @@ trait WebApp extends run.Application { self =>
     Array(
       "org.wartremover.warts.Var",
       "org.wartremover.warts.NonUnitStatements",
-      "org.wartremover.warts.Recursion"
+      "org.wartremover.warts.Recursion",
+      "org.wartremover.warts.DefaultArguments"
     )
   )
   final def run(
       initialNode: Node,
-      differenceActivated: WebApp.DifferenceActivated
+      differenceActivated: WebApp.DifferenceActivated,
+      postProcessing: Option[() => Unit] = None
   ): Unit =
     final case class State(
         node: Node,
@@ -89,6 +91,8 @@ trait WebApp extends run.Application { self =>
         newDocumentReactions.foreach { r =>
           document.addEventListener(r.`type`, r.reaction, false)
         }
+
+        postProcessing.foreach(_())
 
         // Saving state
         state = State(newNode, newView, newModel, newDocumentReactions)
